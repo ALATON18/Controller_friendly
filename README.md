@@ -19,4 +19,31 @@ Controller Friendly aims to make Java Minecraft feel closer to Bedrock/console c
 3. Virtual cursor fallback for modded screens
 4. Manual on-screen keyboard for text/search fields
 
-See [`SPEC.md`](SPEC.md) for the current design.
+## Current state
+
+This repo has the first NeoForge/ModDevGradle scaffold, the design spec, config-backed default bindings, and a first-pass GLFW controller polling/input manager.
+
+The code is intentionally early. Expect the first local import/build to need API fixes before real gameplay testing.
+
+## Building
+
+Use Java 21.
+
+For now, either run with a locally installed Gradle:
+
+```bash
+gradle build
+```
+
+or regenerate the wrapper files locally:
+
+```bash
+gradle wrapper
+./gradlew build
+```
+
+The wrapper properties are present, but the wrapper jar/scripts still need to be generated or copied in.
+
+## Design
+
+See [`SPEC.md`](SPEC.md) for the current design and [`TODO.md`](TODO.md) for the working task list.
