@@ -1,0 +1,6 @@
+{
+	"modmenu.nameTranslation.controller_friendly": "Controller Friendly",
+	"controller_friendly.message.controller_disconnected": "Controller disconnected. Switched back to keyboard and mouse.",
+	"controller_friendly.hud.cursor_prompt": "L3 Cursor",
+	"controller_friendly.keyboard.title": "Controller Keyboard"
+}
