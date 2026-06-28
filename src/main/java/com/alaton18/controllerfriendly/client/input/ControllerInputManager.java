@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
@@ -108,15 +109,15 @@ public final class ControllerInputManager {
 
 		if (minecraft.player != null) {
 			double sensitivity = ControllerFriendlyConfig.CAMERA_SENSITIVITY.get();
-			double yaw = state.rightX() * 12.0D * sensitivity;
-			double pitch = state.rightY() * 12.0D * sensitivity;
+			double yaw = responseCurve(state.rightX()) * 28.0D * sensitivity;
+			double pitch = responseCurve(state.rightY()) * 28.0D * sensitivity;
 			if (yaw != 0.0D || pitch != 0.0D) {
 				minecraft.player.turn(yaw, pitch);
 			}
 		}
 
-		if (pressed(ControllerAction.INVENTORY)) {
-			click(options.keyInventory);
+		if (pressed(ControllerAction.INVENTORY) && minecraft.player != null) {
+			minecraft.setScreen(new InventoryScreen(minecraft.player));
 		}
 		if (pressed(ControllerAction.DROP_ITEM)) {
 			click(options.keyDrop);
@@ -125,7 +126,7 @@ public final class ControllerInputManager {
 			minecraft.setScreen(new ChatScreen(""));
 		}
 		if (pressed(ControllerAction.MENU) || pressed(ControllerAction.CANCEL)) {
-			minecraft.setScreen(new PauseScreen(false));
+			minecraft.setScreen(new PauseScreen(true));
 		}
 
 		// TODO: hotbar bumper cycling, map, quest book, radial menu, and craft action.
@@ -184,5 +185,9 @@ public final class ControllerInputManager {
 
 	private static void click(KeyMapping keyMapping) {
 		KeyMapping.click(keyMapping.getKey());
+	}
+
+	private static double responseCurve(float value) {
+		return value * Math.abs(value);
 	}
 }
