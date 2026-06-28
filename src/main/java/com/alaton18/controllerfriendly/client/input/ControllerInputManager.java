@@ -107,6 +107,13 @@ public final class ControllerInputManager {
 		options.keyAttack.setDown(down(ControllerAction.ATTACK));
 		options.keySprint.setDown(down(ControllerAction.RUN));
 
+		if (pressed(ControllerAction.USE_PLACE_ITEM)) {
+			click(options.keyUse);
+		}
+		if (pressed(ControllerAction.ATTACK)) {
+			click(options.keyAttack);
+		}
+
 		if (minecraft.player != null) {
 			double sensitivity = ControllerFriendlyConfig.CAMERA_SENSITIVITY.get();
 			double yaw = responseCurve(state.rightX()) * 28.0D * sensitivity;
