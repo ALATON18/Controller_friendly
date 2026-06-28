@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
@@ -16,6 +17,9 @@ import org.lwjgl.glfw.GLFWGamepadState;
 import java.util.EnumSet;
 
 public final class ControllerInputManager {
+	private static final double DPAD_CURSOR_STEP = 18.0D;
+	private static final double STICK_CURSOR_SPEED = 11.0D;
+
 	private final ControllerState state = new ControllerState();
 	private final VirtualCursor virtualCursor = new VirtualCursor();
 	private final EnumSet<ControllerAction> lastDownActions = EnumSet.noneOf(ControllerAction.class);
@@ -141,13 +145,64 @@ public final class ControllerInputManager {
 
 	private void handleScreen(Minecraft minecraft) {
 		releaseGameplayKeys(minecraft);
+		virtualCursor.enableForScreen(minecraft);
+		moveScreenCursor(minecraft);
+		syncSystemCursor(minecraft);
 		handleVirtualCursorHold(minecraft);
 
 		if (pressed(ControllerAction.CANCEL) && minecraft.screen != null) {
 			minecraft.screen.onClose();
+			return;
 		}
 
-		// TODO: slot snapping, Cross-as-left-click/select, text field detection, keyboard screen, JEI/EMI page binds.
+		if (pressed(ControllerAction.JUMP_SELECT) || pressed(ControllerAction.INVENTORY_PICKUP_PLACE)) {
+			clickScreen(minecraft, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		}
+		if (pressed(ControllerAction.INVENTORY_SPLIT_STACK)) {
+			clickScreen(minecraft, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+		}
+
+		// TODO: true slot snapping, text field detection, keyboard screen, JEI/EMI page binds.
+	}
+
+	private void moveScreenCursor(Minecraft minecraft) {
+		double dx = responseCurve(state.leftX()) * STICK_CURSOR_SPEED * ControllerFriendlyConfig.CURSOR_SPEED.get();
+		double dy = responseCurve(state.leftY()) * STICK_CURSOR_SPEED * ControllerFriendlyConfig.CURSOR_SPEED.get();
+
+		if (pressed(ControllerAction.DROP_ITEM)) {
+			dy -= DPAD_CURSOR_STEP;
+		}
+		if (pressed(ControllerAction.RADIAL_MENU)) {
+			dy += DPAD_CURSOR_STEP;
+		}
+		if (pressed(ControllerAction.QUEST_BOOK)) {
+			dx -= DPAD_CURSOR_STEP;
+		}
+		if (pressed(ControllerAction.CHAT)) {
+			dx += DPAD_CURSOR_STEP;
+		}
+
+		if (dx != 0.0D || dy != 0.0D) {
+			virtualCursor.move(minecraft, dx, dy);
+		}
+	}
+
+	private void syncSystemCursor(Minecraft minecraft) {
+		double rawX = virtualCursor.x() * minecraft.getWindow().getScreenWidth() / minecraft.getWindow().getGuiScaledWidth();
+		double rawY = virtualCursor.y() * minecraft.getWindow().getScreenHeight() / minecraft.getWindow().getGuiScaledHeight();
+		GLFW.glfwSetCursorPos(minecraft.getWindow().getWindow(), rawX, rawY);
+	}
+
+	private void clickScreen(Minecraft minecraft, int mouseButton) {
+		Screen screen = minecraft.screen;
+		if (screen == null) {
+			return;
+		}
+
+		double mouseX = virtualCursor.x();
+		double mouseY = virtualCursor.y();
+		screen.mouseClicked(mouseX, mouseY, mouseButton);
+		screen.mouseReleased(mouseX, mouseY, mouseButton);
 	}
 
 	private void handleVirtualCursorHold(Minecraft minecraft) {
