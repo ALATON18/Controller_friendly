@@ -50,7 +50,7 @@ public final class ControllerFriendlyConfig {
 	public static final ModConfigSpec.ConfigValue<String> HOTBAR_PREVIOUS = binding("bindings.gameplay.hotbarPrevious", "left_bumper");
 	public static final ModConfigSpec.ConfigValue<String> HOTBAR_NEXT = binding("bindings.gameplay.hotbarNext", "right_bumper");
 	public static final ModConfigSpec.ConfigValue<String> RUN = binding("bindings.gameplay.run", "left_stick");
-	public static final ModConfigSpec.ConfigValue<String> INVENTORY = binding("bindings.gameplay.inventory", "button_north");
+	public static final ModConfigSpec.ConfigValue<String> INVENTORY = binding("bindings.gameplay.inventory", "button_west");
 	public static final ModConfigSpec.ConfigValue<String> CANCEL = binding("bindings.gameplay.cancel", "button_east");
 	public static final ModConfigSpec.ConfigValue<String> JUMP_SELECT = binding("bindings.gameplay.jumpSelect", "button_south");
 	public static final ModConfigSpec.ConfigValue<String> CRAFT = binding("bindings.gameplay.craft", "unbound");
@@ -63,8 +63,8 @@ public final class ControllerFriendlyConfig {
 	public static final ModConfigSpec.ConfigValue<String> QUEST_BOOK = binding("bindings.gameplay.questBook", "dpad_left");
 
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_PICKUP_PLACE = binding("bindings.inventory.pickupPlace", "right_trigger");
-	public static final ModConfigSpec.ConfigValue<String> INVENTORY_QUICK_MOVE = binding("bindings.inventory.quickMove", "button_north");
-	public static final ModConfigSpec.ConfigValue<String> INVENTORY_SPLIT_STACK = binding("bindings.inventory.splitStack", "button_west");
+	public static final ModConfigSpec.ConfigValue<String> INVENTORY_QUICK_MOVE = binding("bindings.inventory.quickMove", "button_west");
+	public static final ModConfigSpec.ConfigValue<String> INVENTORY_SPLIT_STACK = binding("bindings.inventory.splitStack", "unbound");
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_DROP = binding("bindings.inventory.drop", "right_stick");
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_FAVOURITE_LOCK = binding("bindings.inventory.favouriteLock", "left_stick");
 	public static final ModConfigSpec.ConfigValue<String> TOGGLE_CURSOR = binding("bindings.inventory.toggleCursor", "left_stick_hold");
@@ -75,7 +75,7 @@ public final class ControllerFriendlyConfig {
 	public static final ModConfigSpec.ConfigValue<String> KEYBOARD_SHIFT = binding("bindings.keyboard.shift", "left_trigger_hold");
 	public static final ModConfigSpec.ConfigValue<String> KEYBOARD_COPY = binding("bindings.keyboard.copy", "left_bumper");
 	public static final ModConfigSpec.ConfigValue<String> KEYBOARD_PASTE = binding("bindings.keyboard.paste", "right_bumper");
-	public static final ModConfigSpec.ConfigValue<String> KEYBOARD_CLEAR = binding("bindings.keyboard.clear", "button_north");
+	public static final ModConfigSpec.ConfigValue<String> KEYBOARD_CLEAR = binding("bindings.keyboard.clear", "button_west");
 
 	public static final ModConfigSpec SPEC = BUILDER.build();
 
