@@ -94,11 +94,6 @@ publishing {
 			from components.java
 		}
 	}
-	repositories {
-		maven {
-			url = uri("file://${project.projectDir}/repo")
-		}
-	}
 }
 
 tasks.withType(JavaCompile).configureEach {
