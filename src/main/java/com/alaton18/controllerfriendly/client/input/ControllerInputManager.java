@@ -19,7 +19,7 @@ public final class ControllerInputManager {
 	private final VirtualCursor virtualCursor = new VirtualCursor();
 	private final EnumSet<ControllerAction> lastDownActions = EnumSet.noneOf(ControllerAction.class);
 
-	private ControllerProfile profile = ControllerProfile.fromConfig();
+	private ControllerProfile profile;
 	private int activeController = -1;
 	private boolean wasConnected;
 	private int cursorHoldTicks;
@@ -29,6 +29,8 @@ public final class ControllerInputManager {
 			releaseGameplayKeys(minecraft);
 			return;
 		}
+
+		ensureProfileLoaded();
 
 		int controller = findController();
 		if (controller == -1) {
@@ -58,6 +60,12 @@ public final class ControllerInputManager {
 
 	public VirtualCursor virtualCursor() {
 		return virtualCursor;
+	}
+
+	private void ensureProfileLoaded() {
+		if (profile == null) {
+			profile = ControllerProfile.fromConfig();
+		}
 	}
 
 	private int findController() {
@@ -158,7 +166,7 @@ public final class ControllerInputManager {
 	}
 
 	private boolean down(ControllerAction action) {
-		return state.down(profile.buttonFor(action));
+		return profile != null && state.down(profile.buttonFor(action));
 	}
 
 	private boolean pressed(ControllerAction action) {
