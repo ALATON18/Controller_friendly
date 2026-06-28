@@ -64,7 +64,7 @@ public final class ControllerFriendlyConfig {
 
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_PICKUP_PLACE = binding("bindings.inventory.pickupPlace", "right_trigger");
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_QUICK_MOVE = binding("bindings.inventory.quickMove", "button_west");
-	public static final ModConfigSpec.ConfigValue<String> INVENTORY_SPLIT_STACK = binding("bindings.inventory.splitStack", "unbound");
+	public static final ModConfigSpec.ConfigValue<String> INVENTORY_SPLIT_STACK = binding("bindings.inventory.splitStack", "button_west");
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_DROP = binding("bindings.inventory.drop", "right_stick");
 	public static final ModConfigSpec.ConfigValue<String> INVENTORY_FAVOURITE_LOCK = binding("bindings.inventory.favouriteLock", "left_stick");
 	public static final ModConfigSpec.ConfigValue<String> TOGGLE_CURSOR = binding("bindings.inventory.toggleCursor", "left_stick_hold");
