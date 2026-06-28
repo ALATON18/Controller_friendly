@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://github.com/ALATON18/Controller_friendly/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://github.com/ALATON18/Controller_friendly"
+authors="ALATON18"
+displayTest="IGNORE_SERVER_VERSION"
+description='''
+Client-side controller support for Minecraft Java, designed around Bedrock-like controls, inventory slot snapping, virtual cursor fallback, and a Minecraft-style on-screen keyboard.
+'''
+
+[[dependencies.${mod_id}]]
+	modId="neoforge"
+	type="required"
+	versionRange="[${neo_version},)"
+	ordering="NONE"
+	side="CLIENT"
+
+[[dependencies.${mod_id}]]
+	modId="minecraft"
+	type="required"
+	versionRange="${minecraft_version_range}"
+	ordering="NONE"
+	side="CLIENT"
