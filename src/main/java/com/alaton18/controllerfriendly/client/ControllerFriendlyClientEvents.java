@@ -7,6 +7,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 @EventBusSubscriber(modid = ControllerFriendly.MOD_ID, value = Dist.CLIENT)
 public final class ControllerFriendlyClientEvents {
@@ -18,5 +19,10 @@ public final class ControllerFriendlyClientEvents {
 	@SubscribeEvent
 	public static void onClientTick(ClientTickEvent.Post event) {
 		INPUT.tick(Minecraft.getInstance());
+	}
+
+	@SubscribeEvent
+	public static void onRenderFrame(RenderFrameEvent.Pre event) {
+		INPUT.renderFrame(Minecraft.getInstance());
 	}
 }
