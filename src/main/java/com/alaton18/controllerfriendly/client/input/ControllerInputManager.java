@@ -9,16 +9,24 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
 
+import java.lang.reflect.Field;
 import java.util.EnumSet;
 
 public final class ControllerInputManager {
 	private static final double DPAD_CURSOR_STEP = 18.0D;
 	private static final double STICK_CURSOR_SPEED = 11.0D;
+	private static final double CAMERA_SPEED = 220.0D;
+
+	private static Field hoveredSlotField;
+	private static boolean lookedUpHoveredSlotField;
 
 	private final ControllerState state = new ControllerState();
 	private final VirtualCursor virtualCursor = new VirtualCursor();
@@ -28,6 +36,7 @@ public final class ControllerInputManager {
 	private int activeController = -1;
 	private boolean wasConnected;
 	private int cursorHoldTicks;
+	private long lastCameraNanos;
 
 	public void tick(Minecraft minecraft) {
 		if (!ControllerFriendlyConfig.ENABLED.get()) {
@@ -37,22 +46,18 @@ public final class ControllerInputManager {
 
 		ensureProfileLoaded();
 
-		int controller = findController();
-		if (controller == -1) {
+		if (!isWindowFocused(minecraft)) {
+			releaseGameplayKeys(minecraft);
+			lastCameraNanos = 0L;
+			return;
+		}
+
+		if (!pollController()) {
 			onControllerMissing(minecraft);
 			return;
 		}
 
-		activeController = controller;
 		wasConnected = true;
-
-		GLFWGamepadState gamepadState = GLFWGamepadState.create();
-		if (!GLFW.glfwGetGamepadState(activeController, gamepadState)) {
-			onControllerMissing(minecraft);
-			return;
-		}
-
-		state.read(gamepadState);
 
 		if (minecraft.screen == null) {
 			handleGameplay(minecraft);
@@ -63,6 +68,30 @@ public final class ControllerInputManager {
 		rememberActionStates();
 	}
 
+	public void renderFrame(Minecraft minecraft) {
+		if (!ControllerFriendlyConfig.ENABLED.get() || !isWindowFocused(minecraft) || minecraft.screen != null || minecraft.player == null) {
+			lastCameraNanos = 0L;
+			return;
+		}
+
+		ensureProfileLoaded();
+
+		if (!pollController()) {
+			lastCameraNanos = 0L;
+			return;
+		}
+
+		long now = System.nanoTime();
+		if (lastCameraNanos == 0L) {
+			lastCameraNanos = now;
+			return;
+		}
+
+		double deltaSeconds = Math.min((now - lastCameraNanos) / 1_000_000_000.0D, 0.05D);
+		lastCameraNanos = now;
+		handleCamera(minecraft, deltaSeconds);
+	}
+
 	public VirtualCursor virtualCursor() {
 		return virtualCursor;
 	}
@@ -71,6 +100,23 @@ public final class ControllerInputManager {
 		if (profile == null) {
 			profile = ControllerProfile.fromConfig();
 		}
+	}
+
+	private boolean pollController() {
+		int controller = findController();
+		if (controller == -1) {
+			return false;
+		}
+
+		activeController = controller;
+
+		GLFWGamepadState gamepadState = GLFWGamepadState.create();
+		if (!GLFW.glfwGetGamepadState(activeController, gamepadState)) {
+			return false;
+		}
+
+		state.read(gamepadState);
+		return true;
 	}
 
 	private int findController() {
@@ -118,15 +164,6 @@ public final class ControllerInputManager {
 			click(options.keyAttack);
 		}
 
-		if (minecraft.player != null) {
-			double sensitivity = ControllerFriendlyConfig.CAMERA_SENSITIVITY.get();
-			double yaw = responseCurve(state.rightX()) * 28.0D * sensitivity;
-			double pitch = responseCurve(state.rightY()) * 28.0D * sensitivity;
-			if (yaw != 0.0D || pitch != 0.0D) {
-				minecraft.player.turn(yaw, pitch);
-			}
-		}
-
 		if (pressed(ControllerAction.INVENTORY) && minecraft.player != null) {
 			minecraft.setScreen(new InventoryScreen(minecraft.player));
 		}
@@ -143,11 +180,22 @@ public final class ControllerInputManager {
 		// TODO: hotbar bumper cycling, map, quest book, radial menu, and craft action.
 	}
 
+	private void handleCamera(Minecraft minecraft, double deltaSeconds) {
+		double sensitivity = ControllerFriendlyConfig.CAMERA_SENSITIVITY.get();
+		double yaw = responseCurve(state.rightX()) * CAMERA_SPEED * sensitivity * deltaSeconds;
+		double pitch = responseCurve(state.rightY()) * CAMERA_SPEED * sensitivity * deltaSeconds;
+		if (yaw != 0.0D || pitch != 0.0D) {
+			minecraft.player.turn(yaw, pitch);
+		}
+	}
+
 	private void handleScreen(Minecraft minecraft) {
 		releaseGameplayKeys(minecraft);
 		virtualCursor.enableForScreen(minecraft);
-		moveScreenCursor(minecraft);
-		syncSystemCursor(minecraft);
+		boolean cursorMoved = moveScreenCursor(minecraft);
+		if (cursorMoved) {
+			syncSystemCursor(minecraft);
+		}
 		handleVirtualCursorHold(minecraft);
 
 		if (pressed(ControllerAction.CANCEL) && minecraft.screen != null) {
@@ -155,7 +203,12 @@ public final class ControllerInputManager {
 			return;
 		}
 
-		if (pressed(ControllerAction.JUMP_SELECT) || pressed(ControllerAction.INVENTORY_PICKUP_PLACE)) {
+		if (pressed(ControllerAction.JUMP_SELECT)) {
+			if (!quickMoveHoveredSlot(minecraft)) {
+				clickScreen(minecraft, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			}
+		}
+		if (pressed(ControllerAction.INVENTORY_PICKUP_PLACE)) {
 			clickScreen(minecraft, GLFW.GLFW_MOUSE_BUTTON_LEFT);
 		}
 		if (pressed(ControllerAction.INVENTORY_SPLIT_STACK)) {
@@ -165,7 +218,7 @@ public final class ControllerInputManager {
 		// TODO: true slot snapping, text field detection, keyboard screen, JEI/EMI page binds.
 	}
 
-	private void moveScreenCursor(Minecraft minecraft) {
+	private boolean moveScreenCursor(Minecraft minecraft) {
 		double dx = responseCurve(state.leftX()) * STICK_CURSOR_SPEED * ControllerFriendlyConfig.CURSOR_SPEED.get();
 		double dy = responseCurve(state.leftY()) * STICK_CURSOR_SPEED * ControllerFriendlyConfig.CURSOR_SPEED.get();
 
@@ -184,10 +237,16 @@ public final class ControllerInputManager {
 
 		if (dx != 0.0D || dy != 0.0D) {
 			virtualCursor.move(minecraft, dx, dy);
+			return true;
 		}
+		return false;
 	}
 
 	private void syncSystemCursor(Minecraft minecraft) {
+		if (!isWindowFocused(minecraft)) {
+			return;
+		}
+
 		double rawX = virtualCursor.x() * minecraft.getWindow().getScreenWidth() / minecraft.getWindow().getGuiScaledWidth();
 		double rawY = virtualCursor.y() * minecraft.getWindow().getScreenHeight() / minecraft.getWindow().getGuiScaledHeight();
 		GLFW.glfwSetCursorPos(minecraft.getWindow().getWindow(), rawX, rawY);
@@ -199,10 +258,51 @@ public final class ControllerInputManager {
 			return;
 		}
 
+		syncSystemCursor(minecraft);
 		double mouseX = virtualCursor.x();
 		double mouseY = virtualCursor.y();
 		screen.mouseClicked(mouseX, mouseY, mouseButton);
 		screen.mouseReleased(mouseX, mouseY, mouseButton);
+	}
+
+	private boolean quickMoveHoveredSlot(Minecraft minecraft) {
+		Screen screen = minecraft.screen;
+		if (!(screen instanceof AbstractContainerScreen<?> containerScreen) || minecraft.gameMode == null || minecraft.player == null) {
+			return false;
+		}
+
+		Slot hoveredSlot = getHoveredSlot(containerScreen);
+		if (hoveredSlot == null || !hoveredSlot.hasItem()) {
+			return false;
+		}
+
+		minecraft.gameMode.handleInventoryMouseClick(containerScreen.getMenu().containerId, hoveredSlot.index, 0, ClickType.QUICK_MOVE, minecraft.player);
+		return true;
+	}
+
+	private Slot getHoveredSlot(AbstractContainerScreen<?> screen) {
+		try {
+			Field field = hoveredSlotField();
+			return field == null ? null : (Slot) field.get(screen);
+		} catch (IllegalAccessException exception) {
+			ControllerFriendly.LOGGER.warn("Could not read hovered slot", exception);
+			return null;
+		}
+	}
+
+	private static Field hoveredSlotField() {
+		if (lookedUpHoveredSlotField) {
+			return hoveredSlotField;
+		}
+
+		lookedUpHoveredSlotField = true;
+		try {
+			hoveredSlotField = AbstractContainerScreen.class.getDeclaredField("hoveredSlot");
+			hoveredSlotField.setAccessible(true);
+		} catch (NoSuchFieldException exception) {
+			ControllerFriendly.LOGGER.warn("Could not find AbstractContainerScreen.hoveredSlot", exception);
+		}
+		return hoveredSlotField;
 	}
 
 	private void handleVirtualCursorHold(Minecraft minecraft) {
@@ -247,6 +347,10 @@ public final class ControllerInputManager {
 
 	private static void click(KeyMapping keyMapping) {
 		KeyMapping.click(keyMapping.getKey());
+	}
+
+	private static boolean isWindowFocused(Minecraft minecraft) {
+		return GLFW.glfwGetWindowAttrib(minecraft.getWindow().getWindow(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE;
 	}
 
 	private static double responseCurve(float value) {
