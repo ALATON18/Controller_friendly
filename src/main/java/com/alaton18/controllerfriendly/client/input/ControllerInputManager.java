@@ -23,10 +23,11 @@ import java.util.EnumSet;
 public final class ControllerInputManager {
 	private static final double DPAD_CURSOR_STEP = 18.0D;
 	private static final double STICK_CURSOR_SPEED = 11.0D;
-	private static final double CAMERA_SPEED = 220.0D;
+	private static final double CAMERA_SPEED = 850.0D;
 
-	private static Field hoveredSlotField;
-	private static boolean lookedUpHoveredSlotField;
+	private static Field leftPosField;
+	private static Field topPosField;
+	private static boolean lookedUpContainerPositionFields;
 
 	private final ControllerState state = new ControllerState();
 	private final VirtualCursor virtualCursor = new VirtualCursor();
@@ -271,7 +272,7 @@ public final class ControllerInputManager {
 			return false;
 		}
 
-		Slot hoveredSlot = getHoveredSlot(containerScreen);
+		Slot hoveredSlot = findSlotAtCursor(containerScreen);
 		if (hoveredSlot == null || !hoveredSlot.hasItem()) {
 			return false;
 		}
@@ -280,29 +281,46 @@ public final class ControllerInputManager {
 		return true;
 	}
 
-	private Slot getHoveredSlot(AbstractContainerScreen<?> screen) {
+	private Slot findSlotAtCursor(AbstractContainerScreen<?> screen) {
+		int left = getContainerPosition(screen, "leftPos");
+		int top = getContainerPosition(screen, "topPos");
+		double mouseX = virtualCursor.x();
+		double mouseY = virtualCursor.y();
+
+		for (Slot slot : screen.getMenu().slots) {
+			double slotLeft = left + slot.x;
+			double slotTop = top + slot.y;
+			if (mouseX >= slotLeft && mouseX < slotLeft + 16.0D && mouseY >= slotTop && mouseY < slotTop + 16.0D) {
+				return slot;
+			}
+		}
+		return null;
+	}
+
+	private int getContainerPosition(AbstractContainerScreen<?> screen, String name) {
 		try {
-			Field field = hoveredSlotField();
-			return field == null ? null : (Slot) field.get(screen);
+			Field field = containerPositionField(name);
+			return field == null ? 0 : field.getInt(screen);
 		} catch (IllegalAccessException exception) {
-			ControllerFriendly.LOGGER.warn("Could not read hovered slot", exception);
-			return null;
+			ControllerFriendly.LOGGER.warn("Could not read container position {}", name, exception);
+			return 0;
 		}
 	}
 
-	private static Field hoveredSlotField() {
-		if (lookedUpHoveredSlotField) {
-			return hoveredSlotField;
+	private static Field containerPositionField(String name) {
+		if (!lookedUpContainerPositionFields) {
+			lookedUpContainerPositionFields = true;
+			try {
+				leftPosField = AbstractContainerScreen.class.getDeclaredField("leftPos");
+				leftPosField.setAccessible(true);
+				topPosField = AbstractContainerScreen.class.getDeclaredField("topPos");
+				topPosField.setAccessible(true);
+			} catch (NoSuchFieldException exception) {
+				ControllerFriendly.LOGGER.warn("Could not find AbstractContainerScreen position fields", exception);
+			}
 		}
 
-		lookedUpHoveredSlotField = true;
-		try {
-			hoveredSlotField = AbstractContainerScreen.class.getDeclaredField("hoveredSlot");
-			hoveredSlotField.setAccessible(true);
-		} catch (NoSuchFieldException exception) {
-			ControllerFriendly.LOGGER.warn("Could not find AbstractContainerScreen.hoveredSlot", exception);
-		}
-		return hoveredSlotField;
+		return "leftPos".equals(name) ? leftPosField : topPosField;
 	}
 
 	private void handleVirtualCursorHold(Minecraft minecraft) {
