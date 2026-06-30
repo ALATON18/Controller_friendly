@@ -6,6 +6,7 @@ public enum ControllerAction {
 	HOTBAR_PREVIOUS,
 	HOTBAR_NEXT,
 	RUN,
+	SNEAK,
 	INVENTORY,
 	CANCEL,
 	JUMP_SELECT,
