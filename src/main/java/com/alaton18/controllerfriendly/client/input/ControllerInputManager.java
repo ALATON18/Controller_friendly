@@ -23,7 +23,7 @@ import java.util.EnumSet;
 public final class ControllerInputManager {
 	private static final double DPAD_CURSOR_STEP = 18.0D;
 	private static final double STICK_CURSOR_SPEED = 11.0D;
-	private static final double CAMERA_SPEED = 850.0D;
+	private static final double CAMERA_SPEED = 1250.0D;
 
 	private static Field leftPosField;
 	private static Field topPosField;
@@ -277,7 +277,12 @@ public final class ControllerInputManager {
 			return false;
 		}
 
-		minecraft.gameMode.handleInventoryMouseClick(containerScreen.getMenu().containerId, hoveredSlot.index, 0, ClickType.QUICK_MOVE, minecraft.player);
+		int menuSlotId = containerScreen.getMenu().slots.indexOf(hoveredSlot);
+		if (menuSlotId < 0) {
+			return false;
+		}
+
+		minecraft.gameMode.handleInventoryMouseClick(containerScreen.getMenu().containerId, menuSlotId, 0, ClickType.QUICK_MOVE, minecraft.player);
 		return true;
 	}
 
@@ -290,7 +295,7 @@ public final class ControllerInputManager {
 		for (Slot slot : screen.getMenu().slots) {
 			double slotLeft = left + slot.x;
 			double slotTop = top + slot.y;
-			if (mouseX >= slotLeft && mouseX < slotLeft + 16.0D && mouseY >= slotTop && mouseY < slotTop + 16.0D) {
+			if (mouseX >= slotLeft - 1.0D && mouseX < slotLeft + 17.0D && mouseY >= slotTop - 1.0D && mouseY < slotTop + 17.0D) {
 				return slot;
 			}
 		}
