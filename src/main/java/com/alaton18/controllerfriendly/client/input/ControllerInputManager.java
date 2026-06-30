@@ -157,12 +157,19 @@ public final class ControllerInputManager {
 		options.keyUse.setDown(down(ControllerAction.USE_PLACE_ITEM));
 		options.keyAttack.setDown(down(ControllerAction.ATTACK));
 		options.keySprint.setDown(down(ControllerAction.RUN));
+		options.keyShift.setDown(down(ControllerAction.SNEAK));
 
 		if (pressed(ControllerAction.USE_PLACE_ITEM)) {
 			click(options.keyUse);
 		}
 		if (pressed(ControllerAction.ATTACK)) {
 			click(options.keyAttack);
+		}
+		if (pressed(ControllerAction.HOTBAR_PREVIOUS)) {
+			selectHotbarSlot(minecraft, -1);
+		}
+		if (pressed(ControllerAction.HOTBAR_NEXT)) {
+			selectHotbarSlot(minecraft, 1);
 		}
 
 		if (pressed(ControllerAction.INVENTORY) && minecraft.player != null) {
@@ -178,7 +185,18 @@ public final class ControllerInputManager {
 			minecraft.setScreen(new PauseScreen(true));
 		}
 
-		// TODO: hotbar bumper cycling, map, quest book, radial menu, and craft action.
+		// TODO: map, quest book, radial menu, and craft action.
+	}
+
+	private void selectHotbarSlot(Minecraft minecraft, int direction) {
+		if (minecraft.player == null) {
+			return;
+		}
+
+		int currentSlot = minecraft.player.getInventory().selected;
+		int nextSlot = Math.floorMod(currentSlot + direction, 9);
+		minecraft.player.getInventory().selected = nextSlot;
+		click(minecraft.options.keyHotbarSlots[nextSlot]);
 	}
 
 	private void handleCamera(Minecraft minecraft, double deltaSeconds) {
@@ -349,6 +367,7 @@ public final class ControllerInputManager {
 		options.keyUse.setDown(false);
 		options.keyAttack.setDown(false);
 		options.keySprint.setDown(false);
+		options.keyShift.setDown(false);
 	}
 
 	private boolean down(ControllerAction action) {
