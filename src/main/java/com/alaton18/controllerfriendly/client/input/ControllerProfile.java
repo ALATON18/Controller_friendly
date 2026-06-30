@@ -27,6 +27,7 @@ public final class ControllerProfile {
 		put(map, ControllerAction.HOTBAR_PREVIOUS, ControllerFriendlyConfig.HOTBAR_PREVIOUS);
 		put(map, ControllerAction.HOTBAR_NEXT, ControllerFriendlyConfig.HOTBAR_NEXT);
 		put(map, ControllerAction.RUN, ControllerFriendlyConfig.RUN);
+		put(map, ControllerAction.SNEAK, ControllerFriendlyConfig.SNEAK);
 		put(map, ControllerAction.INVENTORY, ControllerFriendlyConfig.INVENTORY);
 		put(map, ControllerAction.CANCEL, ControllerFriendlyConfig.CANCEL);
 		put(map, ControllerAction.JUMP_SELECT, ControllerFriendlyConfig.JUMP_SELECT);
